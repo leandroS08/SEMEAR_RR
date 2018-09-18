@@ -27,7 +27,7 @@ void wrapper_variable(int, void *){}
 
 void cornerHarris_demo(const sensor_msgs::ImageConstPtr &msg)
 {
-    Mat image, src, src_gray;
+    /*oi*/Mat image, src, src_gray;
     
     Mat grad;
     cv_bridge::CvImagePtr cv_ptr;
