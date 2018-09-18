@@ -1,4 +1,4 @@
-# Install script for directory: /home/leandro/Documents/SEMEAR/Robocar Race/Vision Codes/RoadDetection
+# Install script for directory: /home/matheus/catkin_ws/src/SEMEAR_RR/src/RoadDetection
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -40,5 +40,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/home/leandro/Documents/SEMEAR/Robocar Race/Vision Codes/RoadDetection/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/home/matheus/catkin_ws/src/SEMEAR_RR/src/RoadDetection/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")

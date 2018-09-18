@@ -54,10 +54,10 @@ RM = /usr/bin/cmake -E remove -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = "/home/leandro/Documents/SEMEAR/Robocar Race/Vision Codes/RoadDetection"
+CMAKE_SOURCE_DIR = /home/matheus/catkin_ws/src/SEMEAR_RR/src/RoadDetection
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = "/home/leandro/Documents/SEMEAR/Robocar Race/Vision Codes/RoadDetection"
+CMAKE_BINARY_DIR = /home/matheus/catkin_ws/src/SEMEAR_RR/src/RoadDetection
 
 #=============================================================================
 # Target rules for target CMakeFiles/RoadVision.dir
@@ -66,7 +66,7 @@ CMAKE_BINARY_DIR = "/home/leandro/Documents/SEMEAR/Robocar Race/Vision Codes/Roa
 CMakeFiles/RoadVision.dir/all:
 	$(MAKE) -f CMakeFiles/RoadVision.dir/build.make CMakeFiles/RoadVision.dir/depend
 	$(MAKE) -f CMakeFiles/RoadVision.dir/build.make CMakeFiles/RoadVision.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir="/home/leandro/Documents/SEMEAR/Robocar Race/Vision Codes/RoadDetection/CMakeFiles" --progress-num=1,2 "Built target RoadVision"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/matheus/catkin_ws/src/SEMEAR_RR/src/RoadDetection/CMakeFiles --progress-num=1,2 "Built target RoadVision"
 .PHONY : CMakeFiles/RoadVision.dir/all
 
 # Include target in all.
@@ -76,9 +76,9 @@ all: CMakeFiles/RoadVision.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/RoadVision.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start "/home/leandro/Documents/SEMEAR/Robocar Race/Vision Codes/RoadDetection/CMakeFiles" 2
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/matheus/catkin_ws/src/SEMEAR_RR/src/RoadDetection/CMakeFiles 2
 	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/RoadVision.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start "/home/leandro/Documents/SEMEAR/Robocar Race/Vision Codes/RoadDetection/CMakeFiles" 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/matheus/catkin_ws/src/SEMEAR_RR/src/RoadDetection/CMakeFiles 0
 .PHONY : CMakeFiles/RoadVision.dir/rule
 
 # Convenience name for target.
