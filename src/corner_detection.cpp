@@ -17,6 +17,7 @@ using namespace std;
 image_transport::Publisher image_pub_;
 
 int thresh = 200;
+// Oi
 int max_thresh = 255;
 const char *source_window = "Source image";
 const char *corners_window = "Corners detected";
