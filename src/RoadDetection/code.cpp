@@ -32,6 +32,8 @@ vector<Point2i> right_Line_int;
 vector<Point2f> navegavel;
 vector<Point2i> navegavel_int;
 vector <Point2i> central_line;
+//vector <float> pts_metros;
+float pixel_metrs;
 
 void bird_Eyes(Mat&, Mat&);
 
@@ -49,7 +51,10 @@ void inverse_bird_Eyes(Mat&, Mat&, Mat&);
 
 void central_Line(Mat&);
 
+void calc_pixel_metrs(Mat&);
+
 float shift_Central(Mat&);
+
 
 int main( int argc, char** argv )
 {
@@ -106,6 +111,8 @@ int main( int argc, char** argv )
         inverse_bird_Eyes(src, bird_img, result_img);
 
         central_Line(result_img);
+
+        calc_pixel_metrs(result_img);
 
         shift_Central(result_img);
 
@@ -367,9 +374,10 @@ void inverse_bird_Eyes(Mat& src, Mat& in, Mat& out)
         navegavel_int.push_back(Point(navegavel[i].x, navegavel[i].y));
         /*cout << "Ponto inicial: ( " << right_Line[i].x << " ; " << right_Line[i].y << " ) " << endl;
         cout << "Ponto navegavel:   ( " << navegavel_int[i].x << " ; " << navegavel_int[i].y << " ) " << endl;*/
+        //cout << " -> " << i << " " << navegavel[i];
     }
-
-    polylines(out,navegavel_int,1,Scalar(0,0,255),2,8,0);
+    //cout << " ----------------" << endl;
+    polylines(out,navegavel_int,1,Scalar(255,0,0),2,8,0);
 }
 
 /*void inverse_bird_Eyes(Mat& src, Mat& in, Mat& out)
@@ -406,14 +414,32 @@ void central_Line(Mat& in)
 {
     int x_add, y_add;
 
-    for(int i=0; i<navegavel.size(); i++)
-    {
-        y_add = (int) navegavel[i].y;
-        x_add = ( (int) navegavel[i].x + (int) navegavel[(num_rectangle*2)-i-1].x ) / 2;
+    for(int i= 0; i < num_rectangle; i++)
+    {   
+        y_add = (int) navegavel[num_rectangle-1-i].y;
+        x_add = ( (int) navegavel[num_rectangle-1 - i].x + (int) navegavel[num_rectangle+i].x ) / 2;
         central_line.push_back(Point(x_add,y_add));
     }
 
     polylines(in,central_line,0,Scalar(0,255,255),2,8,0);
+}
+
+void calc_pixel_metrs(Mat& in){
+    float aux;
+    float val_pista = 2.5/2;
+    float dist;
+    
+    dist = navegavel[num_rectangle].x - ((navegavel[num_rectangle].x + navegavel[num_rectangle-1].x)/2);
+    pixel_metrs = (val_pista)/dist;
+    cout<< "Um pixel = " << pixel_metrs << " metros" << endl;
+
+
+    /*for(int i = 0; i < num_rectangle; i++ ){
+        
+        aux = (navegavel[num_rectangle].x - (in.cols/2) )*pixel_metrs;
+        cout<< "Quadrado " << i <<  " = " << aux << " metros" << endl;
+        pts_metros.push_back(aux);
+    }*/
 }
 
 float shift_Central(Mat& in)
@@ -427,7 +453,7 @@ float shift_Central(Mat& in)
 
     for(int i=0; i < central_line.size(); i++)
     {
-        shift_num  += frame_center - central_line[i].x;
+        shift_num  += (frame_center - central_line[i].x)*pixel_metrs;
         shift_den++;
     }
 
