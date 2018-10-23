@@ -202,14 +202,26 @@ include_directories(
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
-add_executable(corner_detection src/corner_detection.cpp)
-target_link_libraries(corner_detection
-  ${catkin_LIBRARIES}
-  ${OpenCV_LIBRARIES}
+# add_executable(corner_detection src/corner_detection.cpp)
+# target_link_libraries(corner_detection
+#  ${catkin_LIBRARIES}
+#  ${OpenCV_LIBRARIES}
+# )
+
+# add_executable(simple_sub_image src/simple_sub_image.cpp)
+# target_link_libraries(simple_sub_image
+#  ${catkin_LIBRARIES}
+#  ${OpenCV_LIBRARIES}
+#)
+
+add_executable(simple_test src/simple_test.cpp)
+target_link_libraries(simple_test
+${catkin_LIBRARIES}
+${OpenCV_LIBRARIES}
 )
 
-add_executable(simple_sub_image src/simple_sub_image.cpp)
-target_link_libraries(simple_sub_image
-  ${catkin_LIBRARIES}
-  ${OpenCV_LIBRARIES}
+add_executable(vision src/vision.cpp)
+target_link_libraries(vision
+${catkin_LIBRARIES}
+${OpenCV_LIBRARIES}
 )

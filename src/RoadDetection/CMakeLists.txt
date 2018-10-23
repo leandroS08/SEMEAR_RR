@@ -1,5 +1,0 @@
-cmake_minimum_required(VERSION 2.8)
-project( RoadVision )
-find_package( OpenCV REQUIRED )
-add_executable( RoadVision code.cpp )
-target_link_libraries( RoadVision ${OpenCV_LIBS} )

@@ -1,3 +1,0 @@
-/home/matheus/catkin_ws/src/SEMEAR_RR/src/RoadDetection/CMakeFiles/edit_cache.dir
-/home/matheus/catkin_ws/src/SEMEAR_RR/src/RoadDetection/CMakeFiles/rebuild_cache.dir
-/home/matheus/catkin_ws/src/SEMEAR_RR/src/RoadDetection/CMakeFiles/RoadVision.dir
