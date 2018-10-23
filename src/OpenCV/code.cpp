@@ -25,9 +25,9 @@ int right_x;
 void histogram_Right(Mat&);
 
 /* Variáveis das funções de sliding_Window */
-int h_rectangle = 50;
-int l_rectangle = 100;
-int num_rectangle = 20;
+int h_rectangle = 25;
+int l_rectangle = 50;
+int num_rectangle = 12;
 
 vector<Point2f> right_Line;
 vector<Point2i> iright_Line;
@@ -86,11 +86,10 @@ int main( int argc, char** argv )
     {
         cap.read(src);
 
-        tr1 = src;
+        //bird_Eyes_2(src, 40, 90, 90, 430, 600, bird_img);
+        bird_Eyes(src, bird_img);
 
-        bird_Eyes_2(tr1, 40, 90, 90, 430, 600, bird_img);
-
-        bird_img = src;
+        //bird_img = src;
 
         select_Channel(bird_img, color_img, iLowV, iHighV);
 
@@ -144,6 +143,12 @@ void bird_Eyes(Mat& in, Mat& out)
     src_vertices[1] = Point(0.30*Cols, 0.20*Rows); // 
     src_vertices[2] = Point(0.70*Cols, 0.20*Rows); // 
     src_vertices[3] = Point(     Cols, 0.90*Rows); // 
+
+    /*Mat draw(in.rows, in.cols, CV_8UC3, Scalar(0,0,0) );
+    fillPoly(draw, src_vertices, Scalar (255, 0, 0), 8);
+    char* draw_window = "Regiao Navegavel";
+    namedWindow(draw_window, CV_WINDOW_NORMAL);
+    imshow(draw_window, draw);*/
 
     Point2f dst_vertices[4];
     dst_vertices[0] = Point(  0, 480);

@@ -71,7 +71,7 @@ int main( int argc, char** argv )
 
     /* Abertura do vídeo */ 
     //char* videoName = argv[1];
-    VideoCapture cap("/home/leandro/catkin_ws/src/robocar_race/src/road1.mp4");
+    VideoCapture cap("/home/leandro/catkin_ws/src/SEMEAR_RR/src/road1.mp4");
     if ( !cap.isOpened() )
     {
         cout << "Erro ao abrir o video" << endl;

@@ -1,0 +1,3 @@
+/home/leandro/catkin_ws/src/SEMEAR_RR/src/OpenCV/CMakeFiles/edit_cache.dir
+/home/leandro/catkin_ws/src/SEMEAR_RR/src/OpenCV/CMakeFiles/rebuild_cache.dir
+/home/leandro/catkin_ws/src/SEMEAR_RR/src/OpenCV/CMakeFiles/RoadVision.dir
