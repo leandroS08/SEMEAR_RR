@@ -23,7 +23,7 @@ void select_Channel(Mat&, Mat&, int, int);
 
 /* Variáveis das funções de sliding_Window */
 int h_rectangle = 50;
-int l_rectangle = 100;
+int l_rectangle = 150;
 int num_rectangle = 20;
 
 Point2i button;
@@ -92,10 +92,11 @@ int main( int argc, char** argv )
 
         //inverse_bird_Eyes_2(src, bird_img, result_img);
 
-        //shift_Central(result_img);
+        result_img = sliding_img.clone();
+        shift_Central(result_img);
 
         imshow(source_window, src);
-        //imshow(result_window, sliding_img);
+        imshow(result_window, result_img);
 
         Central_Line.clear();
         iCentral_Line.clear();
@@ -256,13 +257,12 @@ void histogram_Line(Mat& in)
     Mat histImage(in.rows, in.cols, CV_8UC3, Scalar(255,255,255) );
 
     int count[in.cols];
-    int count_Num = 0;
+    long int count_Num = 0;
     int count_Den = 0;
     //int normalized_count[in.cols];
-    float inicial_Row = 0;
-    //float shift_Row = in.rows * 0.1;
+    float inicial_Row = 0.5 * in.rows;
 
-    for (int col = (in.cols)/3; col < (in.cols); ++col)
+    for (int col = (in.cols)/3; col < 2*(in.cols)/3; ++col)
     {
         count[col]=0;
 
@@ -278,22 +278,24 @@ void histogram_Line(Mat& in)
                 }
             }
         //}
-        circle(histImage, Point(col, in.rows - count[col]),1,Scalar(0,0,255),1,8,0);
 
+        if (count[col] != 0)
+            cout << "Coluna " << col << " tem " << count[col] << " pixeis" << endl;            
+
+        circle(histImage, Point(col, in.rows - count[col]),1,Scalar(0,0,255),3,8,0);
     }
 
-    button.y = in.rows ;
-
-    //normalize(count[col], normalized_count[col], 0, in.rows, NORM_MINMAX, -1, Mat() );
-
+    button.y = in.rows;
     if ( ( (count_Den > 10) || (previous_x == -1))  && (count_Den != 0) )
     {
+        //cout << "Count_num: " << count_Num << "  Count_den: " << count_Den << endl;
         button.x = count_Num / count_Den;
         previous_x = button.x;
     }
     else   
         button.x = previous_x;
-    cout << "Ponto inicial" << button.x << "," << button.y << endl;
+
+    cout << "Ponto inicial (" << button.x << "," << button.y << " ) " << endl;
 
     char* histogram_window = "Histogram 2";
     namedWindow(histogram_window, CV_WINDOW_NORMAL);
@@ -344,7 +346,7 @@ void sliding_Window_Line(Mat& in, Mat& out)
                     count_Den+=count[col-P1.x];
                 } 
             }
-            cout << "A coluna " << col << "(indice " << col-P1.x << " ) tem  " << count[col-P1.x] << endl;
+            //cout << "A coluna " << col << "(indice " << col-P1.x << " ) tem  " << count[col-P1.x] << endl;
         }
 
         //cout << " O quadrado " << i << " tem " << count_Den << " pontos " << endl;
@@ -433,6 +435,8 @@ void inverse_bird_Eyes_2(Mat& src, Mat& in, Mat& out)
 
 float shift_Central(Mat& in)
 { 
+    polylines(in,iCentral_Line,0,Scalar(255,0,0),8,8,0);
+
     float frame_center = in.cols / 2;
     float shift;
     float shift_num = 0;
@@ -448,7 +452,7 @@ float shift_Central(Mat& in)
 
     shift = shift_num/shift_den;
 
-    //cout << "Deslocamento da linha central :" << shift << endl;
+    cout << "Deslocamento da linha central: " << shift << endl;
 }
 
 
