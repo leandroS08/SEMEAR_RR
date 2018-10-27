@@ -11,6 +11,8 @@ using namespace std;
 char* source_window = "Original Video";
 char* result_window = "Result Video";
 
+int inicial_position = 0; // seta o veículo sobre a linha pontilhada central
+
 void bird_Eyes(Mat&, Mat&); 
 
 Mat transformationMat;
@@ -21,26 +23,23 @@ int iLowV = 0;
 int iHighV = 255;
 void select_Channel(Mat&, Mat&, int, int);
 
-/* Variáveis das funções de sliding_Window */
-int h_rectangle = 50;
-int l_rectangle = 150;
-int num_rectangle = 20;
-
 Point2i button;
 int previous_x = -1;
 void histogram_Line(Mat&);
 
+/* Constantes da funções de sliding_Window */
+int  h_rectangle = 30;
+int l_rectangle = 90;
+int num_rectangle = 15; // Quando atualizar, lembrar de atualizar o tamanho dos vetores control_line[] e alpha[]
+
 vector<Point2f> Central_Line;
 vector<Point2i> iCentral_Line;
-int control_line[20];
+int control_line[15];
+double alpha[15];
 void sliding_Window_Line(Mat&, Mat&);
 
-vector<Point2f> navegavel;
-vector<Point2i> navegavel_int;
-void navegation_Zone(Mat&, Mat&);
-
 vector<Point2f> final_navegavel;
-vector<Point2i> final_navegavel_int;
+vector<Point2i> ifinal_navegavel;
 void inverse_bird_Eyes(Mat&, Mat&, Mat&);
 void inverse_bird_Eyes_2(Mat&, Mat&, Mat&);
 
@@ -76,23 +75,22 @@ int main( int argc, char** argv )
     {
         cap.read(src);
 
-        //bird_Eyes_2(src, 40, 90, 90, 430, 600, bird_img);
-
-        bird_img = src;
+        bird_Eyes(src,bird_img);
+        //bird_Eyes_2(color_img, 40, 90, 90, 430, 600, bird_img);  
 
         select_Channel(bird_img, color_img, iLowV, iHighV);
         
         histogram_Line(color_img);
 
-        sliding_img = src.clone();
+        sliding_img = bird_img.clone();
 
         sliding_Window_Line(color_img, sliding_img);
 
-        //inverse_bird_Eyes(src, bird_img, result_img);
+        inverse_bird_Eyes(src, bird_img, result_img);
 
         //inverse_bird_Eyes_2(src, bird_img, result_img);
 
-        result_img = sliding_img.clone();
+        //result_img = sliding_img.clone();
         shift_Central(result_img);
 
         imshow(source_window, src);
@@ -100,11 +98,49 @@ int main( int argc, char** argv )
 
         Central_Line.clear();
         iCentral_Line.clear();
+        final_navegavel.clear();
+        ifinal_navegavel.clear();
 
         waitKey(0);
     }
 
     waitKey(0);
+}
+
+void select_Channel(Mat& in, Mat& out, int low, int high)
+{
+    Mat tr;
+    Mat imgThresholded;
+
+    GaussianBlur(in,tr,Size(3,3),0,0,BORDER_DEFAULT);
+    cvtColor(tr,tr,CV_RGB2HSV); // conversão para HLS
+
+    inRange(tr, Scalar(0, 75, 135), Scalar(145, 255, 208), imgThresholded); //Threshold the image
+      
+    //morphological opening (remove small objects from the foreground)
+    erode(imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
+    dilate( imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) ); 
+
+    //morphological closing (fill small holes in the foreground)
+    dilate( imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) ); 
+    erode(imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
+
+    /*namedWindow("H channel", CV_WINDOW_NORMAL);
+    namedWindow("S channel", CV_WINDOW_NORMAL);
+    namedWindow("L channel", CV_WINDOW_NORMAL);
+    imshow("H channel", hls_planes[0]);
+    imshow("S channel", hls_planes[1]);
+    imshow("L channel", hls_planes[2]);*/
+
+    //inRange(hls_planes[1], Scalar(low), Scalar(high), out); // selecão do canal H
+    //inRange(hls_planes[1], 30, 180, tr); // selecão do canal L
+    //bitwise_not ( imgThresholded, imgThresholded );
+
+    out = imgThresholded;
+
+    char* color_window = "Selecao do Canal e das Intensidades de Cor";
+    namedWindow(color_window, CV_WINDOW_NORMAL);
+    imshow(color_window, out);
 }
 
 void bird_Eyes(Mat& in, Mat& out)
@@ -115,10 +151,10 @@ void bird_Eyes(Mat& in, Mat& out)
     int Cols = in.cols;
 
     Point2f src_vertices[4];
-    src_vertices[0] = Point(        0, 0.90*Rows); // 
-    src_vertices[1] = Point(0.30*Cols, 0.20*Rows); // 
-    src_vertices[2] = Point(0.70*Cols, 0.20*Rows); // 
-    src_vertices[3] = Point(     Cols, 0.90*Rows); // 
+    src_vertices[0] = Point(        0,      Rows); // 
+    src_vertices[1] = Point(0.30*Cols, 0.30*Rows); // 
+    src_vertices[2] = Point(0.70*Cols, 0.30*Rows); // 
+    src_vertices[3] = Point(     Cols,      Rows); // 
 
     Point2f dst_vertices[4];
     dst_vertices[0] = Point(  0, 480);
@@ -132,9 +168,9 @@ void bird_Eyes(Mat& in, Mat& out)
 
     out = tr;
     
-    /*char* bird_window = "Bird Eyes Transformation";
+    char* bird_window = "Bird Eyes Transformation";
     namedWindow(bird_window, CV_WINDOW_NORMAL);
-    imshow(bird_window, out);*/
+    imshow(bird_window, out);
 }
 
 void bird_Eyes_2(Mat& in, int alpha_, int beta_, int gamma_, int f_, int dist_, Mat& out)
@@ -216,42 +252,6 @@ void bird_Eyes_2(Mat& in, int alpha_, int beta_, int gamma_, int f_, int dist_, 
     imshow(bird_window, out);
 }
 
-void select_Channel(Mat& in, Mat& out, int low, int high)
-{
-    Mat tr;
-    Mat imgThresholded;
-
-    GaussianBlur(in,tr,Size(3,3),0,0,BORDER_DEFAULT);
-    cvtColor(tr,tr,CV_RGB2HSV); // conversão para HLS
-
-    inRange(tr, Scalar(0, 75, 135), Scalar(145, 255, 208), imgThresholded); //Threshold the image
-      
-    //morphological opening (remove small objects from the foreground)
-    erode(imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
-    dilate( imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) ); 
-
-    //morphological closing (fill small holes in the foreground)
-    dilate( imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) ); 
-    erode(imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
-
-    /*namedWindow("H channel", CV_WINDOW_NORMAL);
-    namedWindow("S channel", CV_WINDOW_NORMAL);
-    namedWindow("L channel", CV_WINDOW_NORMAL);
-    imshow("H channel", hls_planes[0]);
-    imshow("S channel", hls_planes[1]);
-    imshow("L channel", hls_planes[2]);*/
-
-    //inRange(hls_planes[1], Scalar(low), Scalar(high), out); // selecão do canal H
-    //inRange(hls_planes[1], 30, 180, tr); // selecão do canal L
-    //bitwise_not ( imgThresholded, imgThresholded );
-
-    out = imgThresholded;
-
-    char* color_window = "Selecao do Canal e das Intensidades de Cor";
-    namedWindow(color_window, CV_WINDOW_NORMAL);
-    imshow(color_window, out);
-}
-
 void histogram_Line(Mat& in)
 {
     Mat histImage(in.rows, in.cols, CV_8UC3, Scalar(255,255,255) );
@@ -262,7 +262,7 @@ void histogram_Line(Mat& in)
     //int normalized_count[in.cols];
     float inicial_Row = 0.5 * in.rows;
 
-    for (int col = (in.cols)/3; col < 2*(in.cols)/3; ++col)
+    for (int col = 0; col < in.cols; ++col)
     {
         count[col]=0;
 
@@ -279,8 +279,8 @@ void histogram_Line(Mat& in)
             }
         //}
 
-        if (count[col] != 0)
-            cout << "Coluna " << col << " tem " << count[col] << " pixeis" << endl;            
+        //if (count[col] != 0)
+            //cout << "Coluna " << col << " tem " << count[col] << " pixeis" << endl;            
 
         circle(histImage, Point(col, in.rows - count[col]),1,Scalar(0,0,255),3,8,0);
     }
@@ -295,7 +295,7 @@ void histogram_Line(Mat& in)
     else   
         button.x = previous_x;
 
-    cout << "Ponto inicial (" << button.x << "," << button.y << " ) " << endl;
+    //cout << "Ponto inicial (" << button.x << "," << button.y << " ) " << endl;
 
     char* histogram_window = "Histogram 2";
     namedWindow(histogram_window, CV_WINDOW_NORMAL);
@@ -367,6 +367,13 @@ void sliding_Window_Line(Mat& in, Mat& out)
         Central_Line.push_back(new_Center);
         iCentral_Line.push_back(new_Center); 
 
+        if (i>0)
+        {
+            double aux = ( Central_Line[i].y - iCentral_Line[i-1].y )/( Central_Line[i].x - iCentral_Line[i-1].x ) ;
+            alpha[i-1] = ( atan(aux) * 180 ) / (double) PI;
+            cout << "Alpha [ " << i-1 << " ]: " << alpha[i-1] << endl;
+        }
+
         P1.x = new_Center.x - (l_rectangle/2);
         P1.y = new_Center.y - (h_rectangle/2);
         P2.x = new_Center.x + (l_rectangle/2);
@@ -376,6 +383,8 @@ void sliding_Window_Line(Mat& in, Mat& out)
 
         previous_Center = new_Center;
     }
+
+    polylines(out,iCentral_Line,0,Scalar(255,0,0),3,8,0);
 
     char* sliding_window = "Sliding Window";
     namedWindow(sliding_window, CV_WINDOW_NORMAL);
@@ -390,10 +399,10 @@ void inverse_bird_Eyes(Mat& src, Mat& in, Mat& out)
     int Cols = src.cols;
 
     Point2f src_vertices[4];
-    src_vertices[0] = Point(        0,      Rows); // A
-    src_vertices[1] = Point(0.30*Cols, 0.70*Rows); // B
-    src_vertices[2] = Point(0.70*Cols, 0.70*Rows); // C
-    src_vertices[3] = Point(     Cols,      Rows); // D
+    src_vertices[0] = Point(        0,      Rows); // 
+    src_vertices[1] = Point(0.30*Cols, 0.30*Rows); // 
+    src_vertices[2] = Point(0.70*Cols, 0.30*Rows); // 
+    src_vertices[3] = Point(     Cols,      Rows); // 
 
     Point2f dst_vertices[4];
     dst_vertices[0] = Point(  0, 480);
@@ -403,19 +412,19 @@ void inverse_bird_Eyes(Mat& src, Mat& in, Mat& out)
 
     Mat M = getPerspectiveTransform(dst_vertices, src_vertices);
 
-    perspectiveTransform(navegavel, final_navegavel, M);
+    perspectiveTransform(Central_Line, final_navegavel, M);
 
-    for(int i=0 ; i<navegavel.size() ; i++)
+    for(int i=0 ; i<final_navegavel.size() ; i++)
     {
-        final_navegavel_int.push_back(Point(final_navegavel[i].x, final_navegavel[i].y));
+        ifinal_navegavel.push_back(Point(final_navegavel[i].x, final_navegavel[i].y));
         /*cout << "Ponto inicial: ( " << right_Line[i].x << " ; " << right_Line[i].y << " ) " << endl;
         cout << "Ponto navegavel:   ( " << navegavel_int[i].x << " ; " << navegavel_int[i].y << " ) " << endl;*/
     }
 
-    polylines(out,final_navegavel_int,1,Scalar(255,0,0),3,8,0);
+    polylines(out,ifinal_navegavel,0,Scalar(255,0,0),3,8,0);
 }
 
-void inverse_bird_Eyes_2(Mat& src, Mat& in, Mat& out)
+/*void inverse_bird_Eyes_2(Mat& src, Mat& in, Mat& out)
 {
     out = src.clone();
 
@@ -424,19 +433,17 @@ void inverse_bird_Eyes_2(Mat& src, Mat& in, Mat& out)
     for(int i=0 ; i<navegavel.size() ; i++)
     {
         final_navegavel_int.push_back(Point(final_navegavel[i].x, final_navegavel[i].y));
-        /*cout << "Ponto inicial: ( " << right_Line[i].x << " ; " << right_Line[i].y << " ) " << endl;
-        cout << "Ponto navegavel:   ( " << navegavel_int[i].x << " ; " << navegavel_int[i].y << " ) " << endl;*/
+        //cout << "Ponto inicial: ( " << right_Line[i].x << " ; " << right_Line[i].y << " ) " << endl;
+        //cout << "Ponto navegavel:   ( " << navegavel_int[i].x << " ; " << navegavel_int[i].y << " ) " << endl;
     }
 
-    //warpAffine(in,out,trans_mat.inv(),in.size());
+    warpAffine(in,out,trans_mat.inv(),in.size());
 
     polylines(out,final_navegavel_int,1,Scalar(255,0,0),3,8,0);
-}
+}*/
 
 float shift_Central(Mat& in)
 { 
-    polylines(in,iCentral_Line,0,Scalar(255,0,0),8,8,0);
-
     float frame_center = in.cols / 2;
     float shift;
     float shift_num = 0;
@@ -454,5 +461,3 @@ float shift_Central(Mat& in)
 
     cout << "Deslocamento da linha central: " << shift << endl;
 }
-
-
