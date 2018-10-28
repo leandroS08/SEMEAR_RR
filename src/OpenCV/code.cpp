@@ -11,7 +11,14 @@ using namespace std;
 char* source_window = "Original Video";
 char* result_window = "Result Video";
 
-int inicial_position = 0; // seta o veículo sobre a linha pontilhada central
+/*
+    Variável que armazena a identidade da linha analisada
+    0: nenhuma linha
+    1: linha continua esquerda
+    2: linha pontilhada central
+    3: linha continua direita
+*/
+int current_line_view = 2;
 
 void bird_Eyes(Mat&, Mat&); 
 
@@ -30,12 +37,12 @@ void histogram_Line(Mat&);
 /* Constantes da funções de sliding_Window */
 int  h_rectangle = 30;
 int l_rectangle = 90;
-int num_rectangle = 15; // Quando atualizar, lembrar de atualizar o tamanho dos vetores control_line[] e alpha[]
+int num_rectangle = 20; // Quando atualizar, lembrar de atualizar o tamanho dos vetores control_line[] e alpha[]
 
 vector<Point2f> Central_Line;
 vector<Point2i> iCentral_Line;
-int control_line[15];
-double alpha[15];
+int control_line[20];
+double alpha[20];
 void sliding_Window_Line(Mat&, Mat&);
 
 vector<Point2f> final_navegavel;
@@ -52,7 +59,6 @@ int main( int argc, char** argv )
     Mat bird_img; // Bird Eyes Transformation
     Mat color_img; // Manipulação dos canais de cor
     Mat sliding_img; //
-    Mat navegation_img; 
     Mat result_img;
 
     /* Abertura do vídeo */ 
@@ -107,6 +113,36 @@ int main( int argc, char** argv )
     waitKey(0);
 }
 
+void bird_Eyes(Mat& in, Mat& out)
+{
+    Mat tr; // variável de manipulação interna da função
+
+    int Rows = in.rows;
+    int Cols = in.cols;
+
+    Point2f src_vertices[4];
+    src_vertices[0] = Point(        0,      Rows); // 
+    src_vertices[1] = Point(0.30*Cols, 0.30*Rows); // 
+    src_vertices[2] = Point(0.70*Cols, 0.30*Rows); // 
+    src_vertices[3] = Point(     Cols,      Rows); // 
+
+    Point2f dst_vertices[4];
+    dst_vertices[0] = Point(  0, 480);
+    dst_vertices[1] = Point(  0,   0);
+    dst_vertices[2] = Point(640,   0);
+    dst_vertices[3] = Point(640, 480);
+
+    Mat M = getPerspectiveTransform(src_vertices, dst_vertices);
+    tr = Mat(480, 640, CV_8UC3);
+    warpPerspective(in, tr, M, tr.size(), INTER_LINEAR, BORDER_CONSTANT);
+
+    out = tr;
+    
+    char* bird_window = "Bird Eyes Transformation";
+    namedWindow(bird_window, CV_WINDOW_NORMAL);
+    imshow(bird_window, out);
+}
+
 void select_Channel(Mat& in, Mat& out, int low, int high)
 {
     Mat tr;
@@ -141,36 +177,6 @@ void select_Channel(Mat& in, Mat& out, int low, int high)
     char* color_window = "Selecao do Canal e das Intensidades de Cor";
     namedWindow(color_window, CV_WINDOW_NORMAL);
     imshow(color_window, out);
-}
-
-void bird_Eyes(Mat& in, Mat& out)
-{
-    Mat tr; // variável de manipulação interna da função
-
-    int Rows = in.rows;
-    int Cols = in.cols;
-
-    Point2f src_vertices[4];
-    src_vertices[0] = Point(        0,      Rows); // 
-    src_vertices[1] = Point(0.30*Cols, 0.30*Rows); // 
-    src_vertices[2] = Point(0.70*Cols, 0.30*Rows); // 
-    src_vertices[3] = Point(     Cols,      Rows); // 
-
-    Point2f dst_vertices[4];
-    dst_vertices[0] = Point(  0, 480);
-    dst_vertices[1] = Point(  0,   0);
-    dst_vertices[2] = Point(640,   0);
-    dst_vertices[3] = Point(640, 480);
-
-    Mat M = getPerspectiveTransform(src_vertices, dst_vertices);
-    tr = Mat(480, 640, CV_8UC3);
-    warpPerspective(in, tr, M, tr.size(), INTER_LINEAR, BORDER_CONSTANT);
-
-    out = tr;
-    
-    char* bird_window = "Bird Eyes Transformation";
-    namedWindow(bird_window, CV_WINDOW_NORMAL);
-    imshow(bird_window, out);
 }
 
 void bird_Eyes_2(Mat& in, int alpha_, int beta_, int gamma_, int f_, int dist_, Mat& out)
@@ -259,6 +265,8 @@ void histogram_Line(Mat& in)
     int count[in.cols];
     long int count_Num = 0;
     int count_Den = 0;
+    int i_best_col = -1;
+    int n_best_col = 0;
     //int normalized_count[in.cols];
     float inicial_Row = 0.5 * in.rows;
 
@@ -280,16 +288,28 @@ void histogram_Line(Mat& in)
         //}
 
         //if (count[col] != 0)
-            //cout << "Coluna " << col << " tem " << count[col] << " pixeis" << endl;            
+            //cout << "Coluna " << col << " tem " << count[col] << " pixeis" << endl; 
+
+        if (count[col] > n_best_col)
+        {
+            i_best_col = col;
+            n_best_col = count[col];
+        }             
 
         circle(histImage, Point(col, in.rows - count[col]),1,Scalar(0,0,255),3,8,0);
     }
 
     button.y = in.rows;
-    if ( ( (count_Den > 10) || (previous_x == -1))  && (count_Den != 0) )
+    
+    /*if ( ( (count_Den > 10) || (previous_x == -1))  && (count_Den != 0) )
     {
         //cout << "Count_num: " << count_Num << "  Count_den: " << count_Den << endl;
         button.x = count_Num / count_Den;
+        previous_x = button.x;
+    }*/
+    if ( ( (count_Den > 10) || (previous_x == -1) ) )
+    {
+        button.x = i_best_col;
         previous_x = button.x;
     }
     else   
@@ -350,16 +370,15 @@ void sliding_Window_Line(Mat& in, Mat& out)
         }
 
         //cout << " O quadrado " << i << " tem " << count_Den << " pontos " << endl;
-        if ( (count_Den > 10) || (control_line[i] == -1) )
+        if (count_Den > 20)
         {
-            if (count_Den != 0)
-                new_Center.x = count_Num / count_Den;
+            new_Center.x = count_Num / count_Den;
 
             control_line[i] = new_Center.x;
         }
         else
         {
-            new_Center.x = control_line[i];
+            control_line[i] = -1;
             //cout << "Centro anterior [ " << i << " ]: ( " << previous_Central_Line[i].x << " , " << previous_Central_Line[i].y << " ) " << endl;
             //cout << "Centro anterior [ " << i << " ]: " << previous_Central_Line[1].x << endl;
         }
@@ -371,7 +390,7 @@ void sliding_Window_Line(Mat& in, Mat& out)
         {
             double aux = ( Central_Line[i].y - iCentral_Line[i-1].y )/( Central_Line[i].x - iCentral_Line[i-1].x ) ;
             alpha[i-1] = ( atan(aux) * 180 ) / (double) PI;
-            cout << "Alpha [ " << i-1 << " ]: " << alpha[i-1] << endl;
+            //cout << "Alpha [ " << i-1 << " ]: " << alpha[i-1] << endl;
         }
 
         P1.x = new_Center.x - (l_rectangle/2);
@@ -383,6 +402,24 @@ void sliding_Window_Line(Mat& in, Mat& out)
 
         previous_Center = new_Center;
     }
+
+    int count_aux = 0;
+    for (int j=0; j<num_rectangle; j++)
+    {
+        if(control_line[j] == -1)
+            count_aux++;
+    }
+
+    /*cout << "Descontinuidades " << count_aux << endl;
+    cout << "10 pcento do n retangulos " << 0.1 * num_rectangle << endl;*/
+    if ( count_aux > (int) ( 0.1 * num_rectangle ) )
+        current_line_view = 2; // pontilhada central
+    else if ( button.x > (in.rows)/2 )
+        current_line_view = 3; // continua direita
+    else if ( button.x < (in.rows)/2 )
+        current_line_view = 1; // continua esquerda
+
+    //cout << "Linha analisada " << current_line_view << endl;
 
     polylines(out,iCentral_Line,0,Scalar(255,0,0),3,8,0);
 
@@ -459,5 +496,5 @@ float shift_Central(Mat& in)
 
     shift = shift_num/shift_den;
 
-    cout << "Deslocamento da linha central: " << shift << endl;
+    cout << "Deslocamento da linha central (em pixeis): " << shift << endl;
 }
