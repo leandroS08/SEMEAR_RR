@@ -4,7 +4,7 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_CXX
-  "/home/leandro/catkin_ws/src/robocar_race/src/RoadDetection_OpenCV/BackupCodes/Teste/color.cpp" "/home/leandro/catkin_ws/src/robocar_race/src/RoadDetection_OpenCV/BackupCodes/Teste/CMakeFiles/ColorTest.dir/color.cpp.o"
+  "/home/leandro/catkin_ws/src/SEMEAR_RR/src/Testes_Funcoes/TesteCor/color.cpp" "/home/leandro/catkin_ws/src/SEMEAR_RR/src/Testes_Funcoes/TesteCor/CMakeFiles/ColorTest.dir/color.cpp.o"
   )
 set(CMAKE_CXX_COMPILER_ID "GNU")
 

@@ -1,4 +1,4 @@
-# Install script for directory: /home/leandro/catkin_ws/src/robocar_race/src/RoadDetection_OpenCV/BackupCodes/Teste
+# Install script for directory: /home/leandro/catkin_ws/src/SEMEAR_RR/src/Testes_Funcoes/TesteCor
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -40,5 +40,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/home/leandro/catkin_ws/src/robocar_race/src/RoadDetection_OpenCV/BackupCodes/Teste/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/home/leandro/catkin_ws/src/SEMEAR_RR/src/Testes_Funcoes/TesteCor/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")

@@ -38,8 +38,8 @@ void histogram_Line(Mat&);
 
 /* Constantes da funções de sliding_Window */
 int  h_rectangle = 30;
-int l_rectangle = 70;
-int num_rectangle = 20; // Quando atualizar, lembrar de atualizar o tamanho dos vetores control_line[] e alpha[]
+int l_rectangle = 100;
+int num_rectangle = 25; // Quando atualizar, lembrar de atualizar o tamanho dos vetores control_line[] e alpha[]
 
 vector<Point2f> Central_Line;
 vector<Point2i> iCentral_Line;
@@ -70,8 +70,9 @@ int main( int argc, char** argv )
     Mat result_img;
 
     /* Abertura do vídeo */ 
-    char* videoName = "/home/malu/catkin_ws/src/SEMEAR_RR/src/road6.mp4";
-    VideoCapture cap(videoName);
+    /*char* videoName = "/home/malu/catkin_ws/src/SEMEAR_RR/src/road6.mp4";
+    VideoCapture cap(videoName);*/
+    VideoCapture cap(1);
     if ( !cap.isOpened() )
     {
         cout << "Erro ao abrir o video" << endl;
@@ -160,10 +161,10 @@ void select_Channel(Mat& in, Mat& out, int low, int high)
     Mat tr;
     Mat imgThresholded;
 
-    GaussianBlur(in,tr,Size(3,3),0,0,BORDER_DEFAULT);
-    cvtColor(tr,tr,CV_RGB2HSV); // conversão para HLS
+    //GaussianBlur(in,tr,Size(3,3),0,0,BORDER_DEFAULT);
+    cvtColor(in,tr,CV_RGB2HSV); // conversão para HLS
 
-    inRange(tr, Scalar(0, 75, 135), Scalar(145, 255, 208), imgThresholded); //Threshold the image
+    inRange(tr, Scalar(0, 0, 170), Scalar(179, 255, 255), imgThresholded); //Threshold the image
       
     //morphological opening (remove small objects from the foreground)
     erode(imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );

@@ -7,7 +7,7 @@ using namespace std;
 
  int main( int argc, char** argv )
  {
-    VideoCapture cap(argv[1]); //capture the video from web cam
+    VideoCapture cap(1); //capture the video from web cam
 
     if ( !cap.isOpened() )  // if not success, exit program
     {
@@ -16,7 +16,7 @@ using namespace std;
     }
 
     namedWindow("Control", CV_WINDOW_NORMAL); //create a window called "Control"
-    namedWindow("Thresholded Image", CV_WINDOW_NORMAL);
+    namedWindow("Thresholded Imag", CV_WINDOW_NORMAL);
 namedWindow("Original", CV_WINDOW_NORMAL);
 
 

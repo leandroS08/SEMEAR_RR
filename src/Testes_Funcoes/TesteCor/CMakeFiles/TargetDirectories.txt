@@ -1,3 +1,3 @@
-/home/leandro/catkin_ws/src/robocar_race/src/RoadDetection_OpenCV/BackupCodes/Teste/CMakeFiles/rebuild_cache.dir
-/home/leandro/catkin_ws/src/robocar_race/src/RoadDetection_OpenCV/BackupCodes/Teste/CMakeFiles/edit_cache.dir
-/home/leandro/catkin_ws/src/robocar_race/src/RoadDetection_OpenCV/BackupCodes/Teste/CMakeFiles/ColorTest.dir
+/home/leandro/catkin_ws/src/SEMEAR_RR/src/Testes_Funcoes/TesteCor/CMakeFiles/rebuild_cache.dir
+/home/leandro/catkin_ws/src/SEMEAR_RR/src/Testes_Funcoes/TesteCor/CMakeFiles/edit_cache.dir
+/home/leandro/catkin_ws/src/SEMEAR_RR/src/Testes_Funcoes/TesteCor/CMakeFiles/ColorTest.dir
