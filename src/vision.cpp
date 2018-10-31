@@ -70,7 +70,7 @@ int main( int argc, char** argv )
     Mat result_img;
 
     /* Abertura do vídeo */ 
-    char* videoName = "/home/leandro/catkin_ws/src/SEMEAR_RR/src/road6.mp4";
+    char* videoName = "/home/malu/catkin_ws/src/SEMEAR_RR/src/road6.mp4";
     VideoCapture cap(videoName);
     if ( !cap.isOpened() )
     {

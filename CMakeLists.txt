@@ -225,3 +225,15 @@ target_link_libraries(vision
 ${catkin_LIBRARIES}
 ${OpenCV_LIBRARIES}
 )
+
+add_executable(alinhar src/alinhar.cpp)
+target_link_libraries(alinhar
+${catkin_LIBRARIES}
+${OpenCV_LIBRARIES}
+)
+
+add_executable(pid src/pid.cpp)
+target_link_libraries(pid
+${catkin_LIBRARIES}
+${OpenCV_LIBRARIES}
+)
