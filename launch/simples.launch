@@ -1,17 +1,20 @@
 <launch>
 	<master auto="start"/>
-	
 
-	<node name="PID" pkg="pid" type="controller" ns="" >
-      <param name="Kp" value="0.01" />
+  	<node name="PID" pkg="pid" type="controller" >
+      <param name="Kp" value="0.001" />
       <param name="Ki" value="0.0" />
-      <param name="Kd" value="0.0" />
+      <param name="Kd" value="-0.001" />
       <param name="upper_limit" value="255" />
       <param name="lower_limit" value="-255" />
       <param name="windup_limit" value="100" />
       <param name="max_loop_frequency" value="19" />
       <param name="min_loop_frequency" value="21" />
     </node>
+
+  <node name="vision" pkg="robocar_race" type="vision" respawn="false" output="screen"/>
+  <node name="alinhar" pkg="robocar_race" type="alinhar" respawn="false" output="screen"/>
+	
 
 </launch>   
 

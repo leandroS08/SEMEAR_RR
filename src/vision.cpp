@@ -119,10 +119,10 @@ int main( int argc, char** argv )
         final_navegavel.clear();
         ifinal_navegavel.clear();
 
-        waitKey(0);
+        //waitKey(0);
     }
 
-    waitKey(0);
+    //waitKey(0);
 }
 
 void bird_Eyes(Mat& in, Mat& out)

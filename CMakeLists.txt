@@ -232,8 +232,3 @@ ${catkin_LIBRARIES}
 ${OpenCV_LIBRARIES}
 )
 
-add_executable(pid src/pid.cpp)
-target_link_libraries(pid
-${catkin_LIBRARIES}
-${OpenCV_LIBRARIES}
-)

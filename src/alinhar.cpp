@@ -47,6 +47,7 @@ int main(int argc, char **argv)
     // Publicando o SetPoint ( Erro 0 )
     std_msgs::Float64 setpoint_msg;
     setpoint_msg.data = 0;
+    ros::Duration(1).sleep();
     setpoint_pub.publish(setpoint_msg);
 
     ros::spin();
