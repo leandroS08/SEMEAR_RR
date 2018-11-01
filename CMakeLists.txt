@@ -232,3 +232,9 @@ ${catkin_LIBRARIES}
 ${OpenCV_LIBRARIES}
 )
 
+add_executable(teste src/teste.cpp)
+target_link_libraries(teste
+${catkin_LIBRARIES}
+${OpenCV_LIBRARIES}
+)
+
