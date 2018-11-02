@@ -2,7 +2,7 @@
 	<master auto="start"/>
 
   	<node name="PID" pkg="pid" type="controller" >
-      <param name="Kp" value="0.001" />
+      <param name="Kp" value="-0.001" />
       <param name="Ki" value="0.0" />
       <param name="Kd" value="-0.001" />
       <param name="upper_limit" value="255" />

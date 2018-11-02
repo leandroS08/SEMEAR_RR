@@ -126,36 +126,6 @@ int main( int argc, char** argv )
     waitKey(0);
 }
 
-void bird_Eyes(Mat& in, Mat& out)
-{
-    Mat tr; // variável de manipulação interna da função
-
-    int Rows = in.rows;
-    int Cols = in.cols;
-
-    Point2f src_vertices[4];
-    src_vertices[0] = Point(        0,      Rows); // 
-    src_vertices[1] = Point(0.30*Cols, 0.30*Rows); // 
-    src_vertices[2] = Point(0.70*Cols, 0.30*Rows); // 
-    src_vertices[3] = Point(     Cols,      Rows); // 
-
-    Point2f dst_vertices[4];
-    dst_vertices[0] = Point(  0, 480);
-    dst_vertices[1] = Point(  0,   0);
-    dst_vertices[2] = Point(640,   0);
-    dst_vertices[3] = Point(640, 480);
-
-    Mat M = getPerspectiveTransform(src_vertices, dst_vertices);
-    tr = Mat(480, 640, CV_8UC3);
-    warpPerspective(in, tr, M, tr.size(), INTER_LINEAR, BORDER_CONSTANT);
-
-    out = tr;
-    
-    char* bird_window = "Bird Eyes Transformation";
-    namedWindow(bird_window, CV_WINDOW_NORMAL);
-    imshow(bird_window, out);
-}
-
 void select_Channel(Mat& in, Mat& out, int low, int high)
 {
     Mat tr;
@@ -191,6 +161,37 @@ void select_Channel(Mat& in, Mat& out, int low, int high)
     namedWindow(color_window, CV_WINDOW_NORMAL);
     imshow(color_window, out);
 }
+
+void bird_Eyes(Mat& in, Mat& out)
+{
+    Mat tr; // variável de manipulação interna da função
+
+    int Rows = in.rows;
+    int Cols = in.cols;
+
+    Point2f src_vertices[4];
+    src_vertices[0] = Point(        0,      Rows); // 
+    src_vertices[1] = Point(0.30*Cols, 0.30*Rows); // 
+    src_vertices[2] = Point(0.70*Cols, 0.30*Rows); // 
+    src_vertices[3] = Point(     Cols,      Rows); // 
+
+    Point2f dst_vertices[4];
+    dst_vertices[0] = Point(  0, 480);
+    dst_vertices[1] = Point(  0,   0);
+    dst_vertices[2] = Point(640,   0);
+    dst_vertices[3] = Point(640, 480);
+
+    Mat M = getPerspectiveTransform(src_vertices, dst_vertices);
+    tr = Mat(480, 640, CV_8UC3);
+    warpPerspective(in, tr, M, tr.size(), INTER_LINEAR, BORDER_CONSTANT);
+
+    out = tr;
+    
+    char* bird_window = "Bird Eyes Transformation";
+    namedWindow(bird_window, CV_WINDOW_NORMAL);
+    imshow(bird_window, out);
+}
+
 
 void bird_Eyes_2(Mat& in, int alpha_, int beta_, int gamma_, int f_, int dist_, Mat& out)
 {
@@ -409,15 +410,7 @@ void sliding_Window_Line(Mat& in, Mat& out)
         }*/
 
         if(control_line[i] != -1)
-        {
-            count_dct++;
-
-            if (i-1 >= 0)
-            {
-                if ( (control_line[i] == -1 ) && (control_line[i-1] != -1) )
-                    num_dct++;
-            }
-                
+        { 
             P1.x = new_Center.x - (l_rectangle/2);
             P1.y = new_Center.y - (h_rectangle/2);
             P2.x = new_Center.x + (l_rectangle/2);
@@ -429,60 +422,76 @@ void sliding_Window_Line(Mat& in, Mat& out)
         previous_Center = new_Center;
     }
 
-    cout << "Numero relativo de descontinuidades: " << num_dct << endl;
-
-    for(int w=0; w < num_dct; w++)
+    int count_dct_aux = 0;
+    double alfa_aux;
+    for (int k=0; k<num_rectangle; k++)
     {
-        int count_dct_aux = 0;
-        double alfa_aux;
-        for (int k=0; k<num_rectangle; k++)
+        if (control_line[k] == -1)
         {
-            if (control_line[k] == -1)
+            count_dct_aux++;
+
+            if( (k > 0) && (ilast_good == -1) )
             {
-                count_dct_aux++;
-
-                if( (k > 0) && (ilast_good == -1) )
-                {
-                    last_good = Central_Line[k-1];
-                    ilast_good = k-1;
-                }
-                else if (k == 0)
-                {
-                    last_good = initial_Center;
-                    ilast_good = -1;
-                }
-            }     
-            else
+                last_good = Central_Line[k-1];
+                ilast_good = k-1;
+            }
+            else if (k == 0)
             {
-                if( (ilast_good != -1) && (inext_good == -1) )
-                {
-                    next_good = Central_Line[k];
-                    inext_good = k;
-                    break;
-                }
-            }       
-        }
+                last_good.x = initial_Center.x;
+                last_good.y = initial_Center.y - h_rectangle;
+                ilast_good = 0;
 
-        alfa_aux =  ( next_good.y - last_good.y) / (next_good.x - last_good.x) ; 
+                P1.x = last_good.x - (l_rectangle/2);
+                P1.y = last_good.y - (h_rectangle/2);
+                P2.x = last_good.x + (l_rectangle/2);
+                P2.y = last_good.y + (h_rectangle/2);
 
-        /*cout << "Ultimo bom retangulo: " << ilast_good << endl;
-        cout << "Retangulo " << ilast_good << " : ( " << last_good.x << " , " << last_good.y << " )" << endl;
-        cout << "Proximo bom retangulo: " << inext_good << endl;
-        cout << "Retangulo " << inext_good << " : ( " << next_good.x << " , " << next_good.y << " )" << endl;
-        cout << "Descontinuidades " << count_dct << endl;*/
-        //cout << "10 pcento do n retangulos " << 0.1 * num_rectangle << endl;
-
-        for(int k = 1; k <= count_dct_aux; k++)
+                rectangle(out, P1, P2, Scalar(0,100,255), 2, 8, 0);
+            }
+        }     
+        else
         {
-            Central_Line[ilast_good + k].x = last_good.x + ( Central_Line[ilast_good + k].y - last_good.y) / alfa_aux;
-            //cout << "Retangulo " << ilast_good + k << " : ( " << Central_Line[ilast_good + k].x << " , " << Central_Line[ilast_good + k].y << " )" << endl;
+            if( (ilast_good != -1) && (inext_good == -1) )
+            {
+                next_good = Central_Line[k];
+                inext_good = k;
+                break;
+            }
+        }       
+    }
 
+    alfa_aux =  ( next_good.y - last_good.y) / (next_good.x - last_good.x) ; 
+
+    /*cout << "Ultimo bom retangulo: " << ilast_good << endl;
+    cout << "Retangulo " << ilast_good << " : ( " << last_good.x << " , " << last_good.y << " )" << endl;
+    cout << "Proximo bom retangulo: " << inext_good << endl;
+    cout << "Retangulo " << inext_good << " : ( " << next_good.x << " , " << next_good.y << " )" << endl;
+    cout << "Descontinuidades " << count_dct << endl;*/
+    //cout << "10 pcento do n retangulos " << 0.1 * num_rectangle << endl;
+
+    for(int k = 1; k <= count_dct_aux; k++)
+    {
+        Central_Line[ilast_good + k].x = last_good.x + ( Central_Line[ilast_good + k].y - last_good.y) / alfa_aux;
+        //cout << "Retangulo " << ilast_good + k << " : ( " << Central_Line[ilast_good + k].x << " , " << Central_Line[ilast_good + k].y << " )" << endl;
+
+        P1.x = Central_Line[ilast_good + k].x - (l_rectangle/2);
+        P1.y = Central_Line[ilast_good + k].y - (h_rectangle/2);
+        P2.x = Central_Line[ilast_good + k].x + (l_rectangle/2);
+        P2.y = Central_Line[ilast_good + k].y + (h_rectangle/2);
+
+        rectangle(out, P1, P2, Scalar(0,150,255), 2, 8, 0);
+    }
+
+    for(int k = inext_good; k < num_rectangle; k++)
+    {
+        if(control_line[k] == -1)
+        {
             P1.x = Central_Line[ilast_good + k].x - (l_rectangle/2);
             P1.y = Central_Line[ilast_good + k].y - (h_rectangle/2);
             P2.x = Central_Line[ilast_good + k].x + (l_rectangle/2);
             P2.y = Central_Line[ilast_good + k].y + (h_rectangle/2);
 
-            rectangle(out, P1, P2, Scalar(0,150,255), 2, 8, 0);
+            rectangle(out, P1, P2, Scalar(0,180,255), 2, 8, 0);
         }
     }
     

@@ -42,7 +42,7 @@ int main(int argc, char **argv)
     ros::Publisher setpoint_pub = nh.advertise<std_msgs::Float64>("/setpoint", 1);
     ros::Subscriber control_effor_sub = nh.subscribe("/control_effort", 1, control_effort_callback);
 
-    pubVelocidade = nh.advertise<geometry_msgs::Twist>("McQueen/cmd_vel", 1000);
+    pubVelocidade = nh.advertise<geometry_msgs::Twist>("/cmd_vel", 1000);
 
     // Publicando o SetPoint ( Erro 0 )
     std_msgs::Float64 setpoint_msg;

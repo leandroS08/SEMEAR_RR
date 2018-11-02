@@ -78,7 +78,7 @@ int main( int argc, char** argv )
     /* Abertura do vídeo */ 
     /*char* videoName = "/home/leandro/catkin_ws/src/SEMEAR_RR/src/road6.mp4";
     VideoCapture cap(videoName);*/
-    VideoCapture cap(0);
+    VideoCapture cap(1);
     if ( !cap.isOpened() )
     {
         cout << "Erro ao abrir o video" << endl;
@@ -144,36 +144,6 @@ int main( int argc, char** argv )
     //waitKey(0);
 }
 
-void bird_Eyes(Mat& in, Mat& out)
-{
-    Mat tr; // variável de manipulação interna da função
-
-    int Rows = in.rows;
-    int Cols = in.cols;
-
-    Point2f src_vertices[4];
-    src_vertices[0] = Point(        0,      Rows); // 
-    src_vertices[1] = Point(0.30*Cols, 0.30*Rows); // 
-    src_vertices[2] = Point(0.70*Cols, 0.30*Rows); // 
-    src_vertices[3] = Point(     Cols,      Rows); // 
-
-    Point2f dst_vertices[4];
-    dst_vertices[0] = Point(  0, 480);
-    dst_vertices[1] = Point(  0,   0);
-    dst_vertices[2] = Point(640,   0);
-    dst_vertices[3] = Point(640, 480);
-
-    Mat M = getPerspectiveTransform(src_vertices, dst_vertices);
-    tr = Mat(480, 640, CV_8UC3);
-    warpPerspective(in, tr, M, tr.size(), INTER_LINEAR, BORDER_CONSTANT);
-
-    out = tr;
-    
-    char* bird_window = "Bird Eyes Transformation";
-    namedWindow(bird_window, CV_WINDOW_NORMAL);
-    imshow(bird_window, out);
-}
-
 void select_Channel(Mat& in, Mat& out, int low, int high)
 {
     Mat tr;
@@ -208,6 +178,36 @@ void select_Channel(Mat& in, Mat& out, int low, int high)
     char* color_window = "Selecao do Canal e das Intensidades de Cor";
     namedWindow(color_window, CV_WINDOW_NORMAL);
     imshow(color_window, out);
+}
+
+void bird_Eyes(Mat& in, Mat& out)
+{
+    Mat tr; // variável de manipulação interna da função
+
+    int Rows = in.rows;
+    int Cols = in.cols;
+
+    Point2f src_vertices[4];
+    src_vertices[0] = Point(        0,      Rows); // 
+    src_vertices[1] = Point(0.30*Cols, 0.30*Rows); // 
+    src_vertices[2] = Point(0.70*Cols, 0.30*Rows); // 
+    src_vertices[3] = Point(     Cols,      Rows); // 
+
+    Point2f dst_vertices[4];
+    dst_vertices[0] = Point(  0, 480);
+    dst_vertices[1] = Point(  0,   0);
+    dst_vertices[2] = Point(640,   0);
+    dst_vertices[3] = Point(640, 480);
+
+    Mat M = getPerspectiveTransform(src_vertices, dst_vertices);
+    tr = Mat(480, 640, CV_8UC3);
+    warpPerspective(in, tr, M, tr.size(), INTER_LINEAR, BORDER_CONSTANT);
+
+    out = tr;
+    
+    char* bird_window = "Bird Eyes Transformation";
+    namedWindow(bird_window, CV_WINDOW_NORMAL);
+    imshow(bird_window, out);
 }
 
 void bird_Eyes_2(Mat& in, int alpha_, int beta_, int gamma_, int f_, int dist_, Mat& out)
