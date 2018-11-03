@@ -3,7 +3,8 @@
         "iostream": "cpp",
         "ostream": "cpp",
         "cmath": "cpp",
-        "complex": "cpp"
+        "complex": "cpp",
+        "*.tcc": "cpp"
     },
     "python.autoComplete.extraPaths": [
         "/home/malu/catkin_ws/devel/lib/python2.7/dist-packages",

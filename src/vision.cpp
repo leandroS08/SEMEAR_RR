@@ -6,6 +6,7 @@
 #include <image_transport/image_transport.h>
 #include <cv_bridge/cv_bridge.h>
 #include "std_msgs/Float32.h"
+#include "std_msgs/Int64.h"
 
 using namespace cv;
 using namespace std;
@@ -21,20 +22,16 @@ char* result_window = "Result Video";
     1: linha continua
     2: linha pontilhada
 */
-int current_line_view = 2;
+int current_line_view;
 
 /*
     Variável que armazena o lado em que o veículo se encontra na pista
     -1: esquerda
      1: direita
 */
-int current_side = 1;
+int current_side;
 
 void bird_Eyes(Mat&, Mat&); 
-
-Mat transformationMat;
-Mat trans_mat;
-void bird_Eyes_2(Mat&, int, int, int, int, int, Mat&);
 
 int iLowV = 0;
 int iHighV = 255;
@@ -45,9 +42,9 @@ int previous_x = -1;
 void histogram_Line(Mat&);
 
 /* Constantes da funções de sliding_Window */
-int h_rectangle = 35;
-int l_rectangle = 60;
-int num_rectangle = 20; // Quando atualizar, lembrar de atualizar o tamanho dos vetores control_line[] e alpha[]
+int h_rectangle = 20;
+int l_rectangle = 110;
+int num_rectangle = 15; // Quando atualizar, lembrar de atualizar o tamanho dos vetores control_line[] e alpha[]
 
 vector<Point2f> Central_Line;
 vector<Point2i> iCentral_Line;
@@ -58,7 +55,6 @@ void sliding_Window_Line(Mat&, Mat&);
 vector<Point2f> final_navegavel;
 vector<Point2i> ifinal_navegavel;
 void inverse_bird_Eyes(Mat&, Mat&, Mat&);
-void inverse_bird_Eyes_2(Mat&, Mat&, Mat&);
 
 float shift_Central(Mat&);
 
@@ -67,19 +63,22 @@ int main( int argc, char** argv )
     ros::init(argc, argv, "shift_central");
     ros::NodeHandle nh;
     image_transport::ImageTransport it_(nh);
-    ros::Publisher vision_pub = nh.advertise<std_msgs::Float32>("shift_central_topic", 100);
-    image_transport::Publisher image_pub_ = it_.advertise("/road_detection", 1);
+    ros::Publisher vision_pub = nh.advertise<std_msgs::Float32>("/shift_central_topic", 100);
+    ros::Publisher line_view_pub = nh.advertise<std_msgs::Int64>("/line_view_topic", 100);
+    ros::Publisher side_pub = nh.advertise<std_msgs::Int64>("/side_topic", 100);
+    image_transport::Publisher image_pub_ = it_.advertise("/road_vision", 1);
     cv_bridge::CvImagePtr cv_ptr(new cv_bridge::CvImage);
 
-    std_msgs::Float32 vision_msg;
+    std_msgs::Float32 shift_msg;
     float shift_result;
+    std_msgs::Int64 line_msg;
+    std_msgs::Int64 side_msg;
 
     Mat src; // Frame original lido da câmera
-    Mat tr1;
     Mat bird_img; // Bird Eyes Transformation
     Mat color_img; // Manipulação dos canais de cor
-    Mat sliding_img; //
-    Mat result_img;
+    Mat sliding_img; // Sliding window
+    Mat result_img; // Resultado 
 
     /* Abertura do vídeo */ 
     char* videoName = "/home/leandro/catkin_ws/src/SEMEAR_RR/src/road6.mp4";
@@ -106,7 +105,6 @@ int main( int argc, char** argv )
         cap.read(src);
        
         bird_Eyes(src,bird_img);
-        //bird_Eyes_2(color_img, 40, 90, 90, 430, 600, bird_img);  
 
         select_Channel(bird_img, color_img, iLowV, iHighV);
         
@@ -118,22 +116,29 @@ int main( int argc, char** argv )
 
         inverse_bird_Eyes(src, bird_img, result_img);
 
-        //inverse_bird_Eyes_2(src, bird_img, result_img);
-
         shift_result = shift_Central(result_img);
 
-        vision_msg.data = shift_result;
-        ROS_INFO_STREAM(vision_msg.data);
+        // Deslocamento entre a linha da pista e o robô
+        shift_msg.data = shift_result;
+        ROS_INFO_STREAM("Deslocamento: " <<  shift_msg.data);
+        vision_pub.publish(shift_msg);
+        
+        // Linha analisada
+        line_msg.data = current_line_view;
+        ROS_INFO_STREAM("Linha atual: " << line_msg.data);
+        line_view_pub.publish(line_msg);
 
-        vision_pub.publish(vision_msg);
-
+        // Lado do robô
+        side_msg.data = current_side;
+        ROS_INFO_STREAM("Linha atual: " << side_msg.data);
+        side_pub.publish(side_msg);
+        
         imshow(source_window, src);
         imshow(result_window, result_img);
 
         cv_ptr->encoding = "bgr8";
         cv_ptr->header.stamp = time;
-        cv_ptr->header.frame_id = "/road_detection";
-
+        cv_ptr->header.frame_id = "/road_vision";
         cv_ptr->image = result_img;
         image_pub_.publish(cv_ptr->toImageMsg());
 
@@ -158,7 +163,8 @@ void select_Channel(Mat& in, Mat& out, int low, int high)
     GaussianBlur(in,tr,Size(3,3),0,0,BORDER_DEFAULT);
     cvtColor(tr,tr,CV_RGB2HSV); // conversão para HLS
 
-    inRange(tr, Scalar(0, 0, 210), Scalar(179, 255, 255), imgThresholded); //Threshold the image
+    inRange(tr, Scalar(0, 75, 135), Scalar(145, 255, 208), imgThresholded); //Para o vídeo modelo
+    //inRange(tr, Scalar(0, 0, 210), Scalar(179, 255, 255), imgThresholded); //Para o Helvis
       
     //morphological opening (remove small objects from the foreground)
     erode(imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
@@ -216,85 +222,6 @@ void bird_Eyes(Mat& in, Mat& out)
     imshow(bird_window, out);
 }
 
-void bird_Eyes_2(Mat& in, int alpha_, int beta_, int gamma_, int f_, int dist_, Mat& out)
-{
-    //int frameWidth = ;
-    //int frameHeight = ;
-
-    int offsetx = 0;
-    int offsety = -175;
-
-    trans_mat = (Mat_<double>(2,3) << 1, 0, offsetx, 0, 1, offsety);
-    warpAffine(in,out,trans_mat,in.size());
-
-    double focalLength, dist, alpha, beta, gamma; 
-
-    alpha =((double)alpha_ -90) * PI/180;
-    beta =((double)beta_ -90) * PI/180;
-    gamma =((double)gamma_ -90) * PI/180;
-    focalLength = (double)f_;
-    dist = (double)dist_;
-
-    Size image_size = in.size();
-    double w = (double)image_size.width, h = (double)image_size.height;
-
-    // Projecion matrix 2D -> 3D
-    Mat A1 = (Mat_<float>(4, 3)<< 
-        1, 0, -w/2,
-        0, 1, -h/2,
-        0, 0, 0,
-        0, 0, 1 );
-
-    // Rotation matrices Rx, Ry, Rz
-    Mat RX = (Mat_<float>(4, 4) << 
-        1, 0, 0, 0,
-        0, cos(alpha), -sin(alpha), 0,
-        0, sin(alpha), cos(alpha), 0,
-        0, 0, 0, 1 );
-
-    Mat RY = (Mat_<float>(4, 4) << 
-        cos(beta), 0, -sin(beta), 0,
-        0, 1, 0, 0,
-        sin(beta), 0, cos(beta), 0,
-        0, 0, 0, 1  );
-
-    Mat RZ = (Mat_<float>(4, 4) << 
-        cos(gamma), -sin(gamma), 0, 0,
-        sin(gamma), cos(gamma), 0, 0,
-        0, 0, 1, 0,
-        0, 0, 0, 1  );
-
-    // R - rotation matrix
-    Mat R = RX * RY * RZ;
-
-    // T - translation matrix
-    Mat T = (Mat_<float>(4, 4) << 
-        1, 0, 0, 0,  
-        0, 1, 0, 0,  
-        0, 0, 1, dist,  
-        0, 0, 0, 1); 
-
-    // K - intrinsic matrix 
-    Mat K = (Mat_<float>(3, 4) << 
-        focalLength, 0, w/2, 0,
-        0, focalLength, h/2, 0,
-        0, 0, 1, 0
-        ); 
-
-    transformationMat = K * (T * (R * A1));
-
-    warpPerspective(in, out, transformationMat, image_size, INTER_CUBIC | WARP_INVERSE_MAP);
-
-    Mat deslocamento = (Mat_<double>(2,3) << 1, 0, 0, 
-	                                         0, 1, (0.05*out.cols));
-
-    warpAffine(out,out,deslocamento,out.size());
-
-    char* bird_window = "Bird Eyes Transformation";
-    namedWindow(bird_window, CV_WINDOW_NORMAL);
-    imshow(bird_window, out);
-}
-
 void histogram_Line(Mat& in)
 {
     Mat histImage(in.rows, in.cols, CV_8UC3, Scalar(255,255,255) );
@@ -311,18 +238,15 @@ void histogram_Line(Mat& in)
     {
         count[col]=0;
 
-        //for (int i=0; (i<10) && (count_Den < 10); i++)
-        //{
-            for (int row = inicial_Row ; row < in.rows; ++row)
+        for (int row = inicial_Row ; row < in.rows; ++row)
+        {
+            if ( (int)(in.at<uchar>(row,col)) != 0)
             {
-                if ( (int)(in.at<uchar>(row,col)) != 0)
-                {
-                    ++count[col];
-                    count_Num+=(col*count[col]);
-                    count_Den+=count[col];
-                }
+                ++count[col];
+                count_Num+=(col*count[col]);
+                count_Den+=count[col];
             }
-        //}
+        }
 
         //if (count[col] != 0)
             //cout << "Coluna " << col << " tem " << count[col] << " pixeis" << endl; 
@@ -363,7 +287,11 @@ void sliding_Window_Line(Mat& in, Mat& out)
 {
     // Desenha o quadrado inicial resultante do histograma
     Point2d initial_Center = Point(button.x, button.y);
-    Point2d final_Center;
+    Point2d last_good;
+    int ilast_good = -1;
+    Point2d next_good;
+    int inext_good = -1;
+    int count_dct = 0;
 
     Point P1, P2; // pontos auxiliares para desenho dos retângulos
     P1.x = button.x - (l_rectangle/2);
@@ -384,12 +312,12 @@ void sliding_Window_Line(Mat& in, Mat& out)
         count_Den = 0;
 
         new_Center.x = previous_Center.x;
-        new_Center.y = previous_Center.y - (h_rectangle/2);
+        new_Center.y = previous_Center.y - h_rectangle;
 
         P1.x = new_Center.x - (l_rectangle/2);
         P1.y = new_Center.y - (h_rectangle/2);
         P2.x = new_Center.x + (l_rectangle/2);
-        P2.y = new_Center.y;
+        P2.y = new_Center.y + (h_rectangle/2);
 
         for (int col = P1.x ; col <= (P1.x + l_rectangle); col++)
         {
@@ -407,7 +335,7 @@ void sliding_Window_Line(Mat& in, Mat& out)
         }
 
         //cout << " O quadrado " << i << " tem " << count_Den << " pontos " << endl;
-        if (count_Den > 20)
+        if ( count_Den > ( 0.05 * (l_rectangle * h_rectangle) ) )
         {
             new_Center.x = count_Num / count_Den;
 
@@ -417,48 +345,121 @@ void sliding_Window_Line(Mat& in, Mat& out)
         {
             control_line[i] = -1;
             //cout << "Centro anterior [ " << i << " ]: ( " << previous_Central_Line[i].x << " , " << previous_Central_Line[i].y << " ) " << endl;
-            //cout << "Centro anterior [ " << i << " ]: " << previous_Central_Line[1].x << endl;
+            //cout << "Centro anterior [ " << i << " ]: " << previous_Central_Line[1].x << endl;               
         }
 
         Central_Line.push_back(new_Center);
         iCentral_Line.push_back(new_Center); 
 
-        if (i>0)
+        /*if (i>0)
         {
             double aux = ( Central_Line[i].y - iCentral_Line[i-1].y )/( Central_Line[i].x - iCentral_Line[i-1].x ) ;
             alpha[i-1] = ( atan(aux) * 180 ) / (double) PI;
             //cout << "Alpha [ " << i-1 << " ]: " << alpha[i-1] << endl;
+        }*/
+
+        if(control_line[i] != -1)
+        { 
+            P1.x = new_Center.x - (l_rectangle/2);
+            P1.y = new_Center.y - (h_rectangle/2);
+            P2.x = new_Center.x + (l_rectangle/2);
+            P2.y = new_Center.y + (h_rectangle/2);
+
+            rectangle(out, P1, P2, Scalar(0,100,255), 2, 8, 0);
         }
-
-        P1.x = new_Center.x - (l_rectangle/2);
-        P1.y = new_Center.y - (h_rectangle/2);
-        P2.x = new_Center.x + (l_rectangle/2);
-        P2.y = new_Center.y;
-
-        rectangle(out, P1, P2, Scalar(0,100,255), 2, 8, 0);
+        else    
+            count_dct++;
 
         previous_Center = new_Center;
     }
 
-    int count_aux = 0;
-    for (int j=0; j<num_rectangle; j++)
+    if ( count_dct > (0.1 * num_rectangle) )
     {
-        if(control_line[j] == -1)
-            count_aux++;
+        if ( count_dct > (0.9 * num_rectangle) )
+            current_line_view = 0;
+        else 
+            current_line_view = 2;
+    }
+    else if ( (current_side == -1 ) && (current_side == -1) )
+        current_line_view = 2;
+    else if ( (current_side == -1 ) && (current_side == 1) )
+        current_line_view = 3;
+
+    //cout << "Descontinuidades: " << count_dct << endl;
+    //cout << "10 pcento do n retangulos: " << 0.1 * num_rectangle << endl;
+    //cout << "Linha em análise: " << current_line_view << endl;
+
+    int num_rec_dct = 0;
+    double alfa_aux;
+    for (int k=0; k<num_rectangle; k++)
+    {
+        if (control_line[k] == -1)
+        {
+            num_rec_dct++;
+
+            if( (k > 0) && (ilast_good == -1) )
+            {
+                last_good = Central_Line[k-1];
+                ilast_good = k-1;
+            }
+            else if (k == 0)
+            {
+                last_good.x = initial_Center.x;
+                last_good.y = initial_Center.y - h_rectangle;
+                ilast_good = 0;
+
+                P1.x = last_good.x - (l_rectangle/2);
+                P1.y = last_good.y - (h_rectangle/2);
+                P2.x = last_good.x + (l_rectangle/2);
+                P2.y = last_good.y + (h_rectangle/2);
+
+                rectangle(out, P1, P2, Scalar(0,100,255), 2, 8, 0);
+            }
+        }     
+        else
+        {
+            if( (ilast_good != -1) && (inext_good == -1) )
+            {
+                next_good = Central_Line[k];
+                inext_good = k;
+                break;
+            }
+        }       
     }
 
-    /*cout << "Descontinuidades " << count_aux << endl;
-    cout << "10 pcento do n retangulos " << 0.1 * num_rectangle << endl;*/
-    if ( count_aux > (int) ( 0.1 * num_rectangle ) )
-        current_line_view = 2; // pontilhada central
-    else if ( button.x > (in.rows)/2 )
-        current_line_view = 3; // continua direita
-    else if ( button.x < (in.rows)/2 )
-        current_line_view = 1; // continua esquerda
 
-    //cout << "Linha analisada " << current_line_view << endl;
+    alfa_aux =  ( next_good.y - last_good.y) / (next_good.x - last_good.x) ; 
 
-    //polylines(out,iCentral_Line,0,Scalar(255,0,0),3,8,0);
+    /*cout << "Ultimo bom retangulo: " << ilast_good << endl;
+    cout << "Retangulo " << ilast_good << " : ( " << last_good.x << " , " << last_good.y << " )" << endl;
+    cout << "Proximo bom retangulo: " << inext_good << endl;
+    cout << "Retangulo " << inext_good << " : ( " << next_good.x << " , " << next_good.y << " )" << endl;*/
+
+    for(int k = 1; k <= num_rec_dct; k++)
+    {
+        Central_Line[ilast_good + k].x = last_good.x + ( Central_Line[ilast_good + k].y - last_good.y) / alfa_aux;
+        //cout << "Retangulo " << ilast_good + k << " : ( " << Central_Line[ilast_good + k].x << " , " << Central_Line[ilast_good + k].y << " )" << endl;
+
+        P1.x = Central_Line[ilast_good + k].x - (l_rectangle/2);
+        P1.y = Central_Line[ilast_good + k].y - (h_rectangle/2);
+        P2.x = Central_Line[ilast_good + k].x + (l_rectangle/2);
+        P2.y = Central_Line[ilast_good + k].y + (h_rectangle/2);
+
+        rectangle(out, P1, P2, Scalar(0,150,255), 2, 8, 0);
+    }
+
+    for(int k = inext_good; k < num_rectangle; k++)
+    {
+        if(control_line[k] == -1)
+        {
+            P1.x = Central_Line[k].x - (l_rectangle/2);
+            P1.y = Central_Line[k].y - (h_rectangle/2);
+            P2.x = Central_Line[k].x + (l_rectangle/2);
+            P2.y = Central_Line[k].y + (h_rectangle/2);
+
+            rectangle(out, P1, P2, Scalar(0,180,255), 2, 8, 0);
+        }
+    }
 
     char* sliding_window = "Sliding Window";
     namedWindow(sliding_window, CV_WINDOW_NORMAL);
@@ -498,24 +499,6 @@ void inverse_bird_Eyes(Mat& src, Mat& in, Mat& out)
     polylines(out,ifinal_navegavel,0,Scalar(255,0,0),3,8,0);
 }
 
-/*void inverse_bird_Eyes_2(Mat& src, Mat& in, Mat& out)
-{
-    out = src.clone();
-
-    perspectiveTransform(navegavel, final_navegavel, transformationMat.inv());
-
-    for(int i=0 ; i<navegavel.size() ; i++)
-    {
-        final_navegavel_int.push_back(Point(final_navegavel[i].x, final_navegavel[i].y));
-        //cout << "Ponto inicial: ( " << right_Line[i].x << " ; " << right_Line[i].y << " ) " << endl;
-        //cout << "Ponto navegavel:   ( " << navegavel_int[i].x << " ; " << navegavel_int[i].y << " ) " << endl;
-    }
-
-    warpAffine(in,out,trans_mat.inv(),in.size());
-
-    polylines(out,final_navegavel_int,1,Scalar(255,0,0),3,8,0);
-}*/
-
 float shift_Central(Mat& in)
 { 
     float frame_center = in.cols / 2;
@@ -526,17 +509,20 @@ float shift_Central(Mat& in)
     line(in,Point(frame_center,0),Point(frame_center,in.rows),Scalar(0,255,0),3,8,0);
 
     for(int i=0; i < final_navegavel.size(); i++)
-    {
-        //cout << "Frame center: " << frame_center << endl;
-        //cout << "Central line: " << final_navegavel[i].x << endl;
-        //cout << "Sub: " << frame_center - Central_Line[i].x << endl;        
+    {      
         shift_num  += frame_center - final_navegavel[i].x;
         shift_den++;
     }
 
     shift = shift_num/shift_den;
 
+    if (shift >= 0)
+        current_side = 1;
+    else   
+        current_side = -1;
+
     //cout << "Deslocamento da linha central (em pixeis): " << shift << endl;
+    //cout << "Lado (-1: esquerda// 1: direita): " << current_side << endl;
 
     return shift;
 }
