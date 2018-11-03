@@ -46,6 +46,9 @@ vector<Point2i> iCentral_Line;
 int control_line[20];
 double alpha[20];
 void sliding_Window_Line(Mat&, Mat&);
+int num_linhas; // ALTERAÇÕES
+int aux_num_linhas; // ALTERAÇÕES
+
 
 vector<Point2f> final_navegavel;
 vector<Point2i> ifinal_navegavel;
@@ -70,7 +73,7 @@ int main( int argc, char** argv )
     Mat result_img;
 
     /* Abertura do vídeo */ 
-    char* videoName = "/home/leandro/catkin_ws/src/SEMEAR_RR/src/road6.mp4";
+    char* videoName = "/home/matheus/catkin_ws/src/SEMEAR_RR/src/road6.mp4";
     VideoCapture cap(videoName);
     //VideoCapture cap(0);
     if ( !cap.isOpened() )
@@ -357,6 +360,8 @@ void sliding_Window_Line(Mat& in, Mat& out)
     int count_Num;
     int count_Den;
 
+   
+
     for (int i=0; i<num_rectangle; i++)
     {
         count_Num = 0;
@@ -434,6 +439,7 @@ void sliding_Window_Line(Mat& in, Mat& out)
             {
                 last_good = Central_Line[k-1];
                 ilast_good = k-1;
+                aux_num_linhas = 0;// ALTERAÇÕES
             }
             else if (k == 0)
             {
@@ -445,8 +451,13 @@ void sliding_Window_Line(Mat& in, Mat& out)
                 P1.y = last_good.y - (h_rectangle/2);
                 P2.x = last_good.x + (l_rectangle/2);
                 P2.y = last_good.y + (h_rectangle/2);
-
-                rectangle(out, P1, P2, Scalar(0,100,255), 2, 8, 0);
+                // ALTERAÇÕES
+                if(aux_num_linhas==0){
+                    num_linhas++;
+                    cout << "Numero de linhas: " << num_linhas << endl;
+                    aux_num_linhas = 1;
+                }
+                rectangle(out, P1, P2, Scalar(0,0,0), 2, 8, 0);
             }
         }     
         else
@@ -486,10 +497,11 @@ void sliding_Window_Line(Mat& in, Mat& out)
     {
         if(control_line[k] == -1)
         {
-            P1.x = Central_Line[ilast_good + k].x - (l_rectangle/2);
-            P1.y = Central_Line[ilast_good + k].y - (h_rectangle/2);
-            P2.x = Central_Line[ilast_good + k].x + (l_rectangle/2);
-            P2.y = Central_Line[ilast_good + k].y + (h_rectangle/2);
+            // ALTERAÇÕES
+            P1.x = Central_Line[k].x - (l_rectangle/2);
+            P1.y = Central_Line[k].y - (h_rectangle/2);
+            P2.x = Central_Line[k].x + (l_rectangle/2);
+            P2.y = Central_Line[k].y + (h_rectangle/2);
 
             rectangle(out, P1, P2, Scalar(0,180,255), 2, 8, 0);
         }
