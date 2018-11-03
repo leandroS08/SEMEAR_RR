@@ -16,11 +16,17 @@ char* result_window = "Result Video";
 /*
     Variável que armazena a identidade da linha analisada
     0: nenhuma linha
-    1: linha continua esquerda
-    2: linha pontilhada central
-    3: linha continua direita
+    1: linha continua
+    2: linha pontilhada
 */
 int current_line_view = 2;
+
+/*
+    Variável que armazena o lado em que o veículo se encontra na pista
+    -1: esquerda
+     1: direita
+*/
+int current_side = 1;
 
 void bird_Eyes(Mat&, Mat&); 
 

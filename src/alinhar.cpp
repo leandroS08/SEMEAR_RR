@@ -7,7 +7,7 @@
 ros::Publisher state_pub;
 ros::Publisher pubVelocidade;
 
-const double VEL = 0.1;
+const double VEL = 0.08;
 
 // Encaminhando o erro de deslocamento como "estado"  para o PID
 void callbackShift(const std_msgs::Float32 &message)
